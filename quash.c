@@ -13,9 +13,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-// #include "quash.h"
-
- struct Job
+struct Job
 {
     int pid;
     int id;
