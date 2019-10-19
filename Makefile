@@ -1,4 +1,4 @@
-Quash: quash.o
+Quash: quash.o 
 	gcc quash.o -o Quash -lreadline
 
 quash.o: quash.c
