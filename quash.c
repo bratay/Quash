@@ -12,6 +12,8 @@
 #include <termios.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#define true 1
+#define false 0
 
 struct Job
 {
@@ -24,6 +26,7 @@ static int numJobs = 0;
 static struct Job jobs[100];
 static char *env;
 static char *dir;
+static char *curAction;
 
 void setJobs(struct Job newJobs[])
 {
@@ -66,9 +69,9 @@ void cd(char *p)
     }
 }
 
-int setPath(char *input)
+int setPath(char *action)
 {
-    char *setter = strtok(input, "=");
+    char *setter = strtok(action, "=");
     char *ptype = setter;
     setter = strtok(NULL, "\0");
     char *path = setter;
@@ -95,7 +98,7 @@ void show_jobs()
     }
 }
 
-void process(int numJobs, char* command)
+void process(char *command)
 {
     int status;
     pid_t pid, sid;
@@ -109,7 +112,7 @@ void process(int numJobs, char* command)
             exit(0);
         }
         printf("New process with pid %d running out of %d processes\n", getpid(), numJobs + 1);
-        // processNewCommandFunct(command);
+        performAction(command);
         printf("Process %d is done\n", getpid());
         kill(getpid(), -9);
         exit(0);
@@ -117,10 +120,8 @@ void process(int numJobs, char* command)
     else
     {
         struct Job new_job = {.pid = pid, .id = numJobs, .cmd = command};
-        // struct Job jobs[100] = getJobs();
         jobs[numJobs] = new_job;
         numJobs++;
-        // setNumJobs(numJobs);
         while (waitpid(pid, NULL, WNOHANG | WEXITED) > 0)
         {
         }
@@ -161,31 +162,66 @@ void execute(char **cmds)
     }
 }
 
+void makePipe()
+{
+    char *part = strtok(curAction, "|\0");
+    char *command = part;
+    part = strtok(NULL, "\0");
+    char *nextCommand = part;
+    int spipe[2];
+    int status;
+    pipe(spipe);
+    pid_t pid, pid2;
+    pid = fork();
+    if (pid == 0)
+    {
+        dup2(spipe[1], STDOUT_FILENO);
+        performAction(clearWhitespace(command));
+        close(spipe[0]);
+        close(spipe[1]);
+        exit(0);
+    }
+    pid2 = fork();
+    if (pid2 == 0)
+    {
+        dup2(spipe[0], STDIN_FILENO);
+        performAction(clearWhitespace(nextCommand));
+        close(spipe[0]);
+        close(spipe[1]);
+        exit(0);
+    }
+}
+
+void performAction()
+{
+}
+
 int main(int argc, char **argv, char **envp)
 {
     printf("\n\nQUASH\n\n");
     rl_bind_key('\t', rl_complete);
-    char *input, prompt[128];
+    char *action, prompt[128];
     env = getenv("USER");
     dir = getcwd(NULL, 1024);
     numJobs = 0;
     while (free)
     {
         snprintf(prompt, sizeof(prompt), "[%s:%s]$ ", env, dir);
-        input = readline(prompt);
-        input = clearWhitespace(input);
-        if (strcmp("exit", input) != 0 && strcmp("quit", input) != 0)
+        action = readline(prompt);
+        action = clearWhitespace(action);
+        if (strcmp("exit", action) != 0 && strcmp("quit", action) != 0)
         {
-            if (strlen(input) > 1)
+            if (strlen(action) > 1)
             {
-                input = clearWhitespace(input);
+                action = clearWhitespace(action);
+                performAction();
             }
         }
         else
         {
             break;
         }
-        free(input);
+        free(action);
     }
 
     return 0;
