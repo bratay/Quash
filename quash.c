@@ -100,7 +100,7 @@ void showJobs()
     }
 }
 
-void process(char *command)
+void process()
 {
     int status;
     pid_t pid, sid;
@@ -126,7 +126,7 @@ void process(char *command)
     }
     else
     {
-        struct Job new_job = {.pid = pid, .id = numJobs, .cmd = command};
+        struct Job new_job = {.pid = pid, .id = numJobs, .cmd = curAction};
         jobs[numJobs] = new_job;
         numJobs++;
         while (waitpid(pid, NULL, WNOHANG | WEXITED) > 0)
@@ -230,7 +230,7 @@ void performAction()
             Args[i - 1] = args[i];
         }
     }
-    char *backgrd = strchr(input, '&');
+    char *background = strchr(input, '&');
     char *pipe = strchr(input, '|');
     char *filedir_in = strchr(input, '<');
     char *filedir_out = strchr(input, '>');
@@ -253,9 +253,11 @@ void performAction()
     }
     else if (pipe != NULL)
     {
+        makePipe();
     }
-    else if (backgrd != NULL)
+    else if (background != NULL)
     {
+        process();
     }
     else if (killAction != NULL)
     {
