@@ -28,6 +28,8 @@ static char *env;
 static char *dir;
 static char *curAction;
 
+void performAction();
+
 void setJobs(struct Job newJobs[])
 {
     for (int i = 0; i < 100; i++)
@@ -83,7 +85,7 @@ int setPath(char *action)
     return 1;
 }
 
-void show_jobs()
+void showJobs()
 {
     int i;
     printf("\nActive jobs:\n");
@@ -108,11 +110,16 @@ void process(char *command)
         sid = setsid();
         if (sid < 0)
         {
-            fprintf(stderr, "Unable to create new process\n");
+            fprintf(stderr, "Process creation fail\n");
             exit(0);
         }
-        printf("New process with pid %d running out of %d processes\n", getpid(), numJobs + 1);
-        performAction(command);
+        printf("Process %d running out of %d processes\n", getpid(), numJobs + 1);
+
+        char* backGroundAction = strdup(curAction);
+        backGroundAction[strlen(curAction) - 1] = 0;
+        curAction = backGroundAction;
+
+        performAction();
         printf("Process %d is done\n", getpid());
         kill(getpid(), -9);
         exit(0);
@@ -139,7 +146,7 @@ void execute(char **cmds)
         {
             if (execvp(cmds[0], cmds) < 0)
             {
-                fprintf(stderr, "Invalid command\n");
+                fprintf(stderr, "Invalid action\n");
                 exit(0);
             }
         }
@@ -147,7 +154,7 @@ void execute(char **cmds)
         {
             if (execvp(cmds[0], NULL) < 0)
             {
-                fprintf(stderr, "Invalid command\n");
+                fprintf(stderr, "Invalid action\n");
                 exit(0);
             }
         }
@@ -176,7 +183,8 @@ void makePipe()
     if (pid == 0)
     {
         dup2(spipe[1], STDOUT_FILENO);
-        performAction(clearWhitespace(command));
+        curAction = clearWhitespace(command);
+        performAction();
         close(spipe[0]);
         close(spipe[1]);
         exit(0);
@@ -185,7 +193,8 @@ void makePipe()
     if (pid2 == 0)
     {
         dup2(spipe[0], STDIN_FILENO);
-        performAction(clearWhitespace(nextCommand));
+        curAction = clearWhitespace(command);
+        performAction();
         close(spipe[0]);
         close(spipe[1]);
         exit(0);
@@ -194,6 +203,73 @@ void makePipe()
 
 void performAction()
 {
+    char *command;
+    char *args[20];
+    for (int i = 0; i < 20; i++)
+    {
+        args[i] = NULL;
+    }
+    int numArgs = 0;
+    char *input = strdup(curAction);
+    command = strtok(curAction, " ");
+    while (command != NULL)
+    {
+        args[numArgs] = command;
+        command = strtok(NULL, " ");
+        numArgs++;
+    }
+    char *Args[19];
+    for (int i = 0; i < 19; i++)
+    {
+        Args[i] = NULL;
+    }
+    for (int i = 1; i < 20; i++)
+    {
+        if (args[i] != NULL)
+        {
+            Args[i - 1] = args[i];
+        }
+    }
+    char *backgrd = strchr(input, '&');
+    char *pipe = strchr(input, '|');
+    char *filedir_in = strchr(input, '<');
+    char *filedir_out = strchr(input, '>');
+    char *killAction = strstr(input, "kill");
+    int CD = strcmp("cd", args[0]);
+    int set = strcmp(args[0], "set");
+    int seeJobs = strcmp(args[0], "jobs");
+
+    if (CD == 0)
+    {
+        cd(args[1]);
+    }
+    else if (set == 0)
+    {
+        setPath(args[1]);
+    }
+    else if (seeJobs == 0)
+    {
+        showJobs();
+    }
+    else if (pipe != NULL)
+    {
+    }
+    else if (backgrd != NULL)
+    {
+    }
+    else if (killAction != NULL)
+    {
+    }
+    else if (filedir_in != NULL)
+    {
+    }
+    else if (filedir_out != NULL)
+    {
+    }
+    else
+    {
+        execute(args);
+    }
 }
 
 int main(int argc, char **argv, char **envp)
@@ -204,7 +280,7 @@ int main(int argc, char **argv, char **envp)
     env = getenv("USER");
     dir = getcwd(NULL, 1024);
     numJobs = 0;
-    while (free)
+    while(true)
     {
         snprintf(prompt, sizeof(prompt), "[%s:%s]$ ", env, dir);
         action = readline(prompt);
