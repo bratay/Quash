@@ -346,6 +346,7 @@ void performAction()
     }
     else if (filedir_out != NULL)
     {
+        fileOUT(args);
     }
     else
     {
