@@ -161,6 +161,37 @@ void execute(char **cmds)
     }
 }
 
+void withoutArgs(){
+    int status;
+    pid_t pid;
+    pid = fork();
+    if (pid == 0)
+    {
+        if (strlen(cmds[0]) > 0)
+        {
+            waitpid(pid, &status, 0);
+        if (status == 1)
+        {
+            fprintf(stderr, "%s\n", "Status == 1\n");
+        }
+ 
+        }
+        else
+        {
+            fprintf(stderr, "Invalid command\n");
+            exit(0);
+        }
+    }
+    else
+    {
+        waitpid(pid, &status, 0);
+        if (status == 1)
+        {
+            fprintf(stderr, "%s\n", "Status == 1\n");
+        }
+    }
+}
+
 int main(int argc, char **argv, char **envp)
 {
     printf("\n\nQUASH\n\n");
