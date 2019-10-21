@@ -251,6 +251,34 @@ void fileIN(char *args){
     }
 }
 
+void fileOUT(char *args){
+    int i, out;
+    int position = 0;
+    while (position == 0) {
+        if (strcmp(">",args[i]) == 0) {
+            position = i;
+        }
+        i++;
+    }
+    int status;
+    pid_t pid;
+    pid = fork();
+    if (pid == 0) {
+        char* filename = args[position + 1];
+        out = open(filename, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+        dup2(out, STDOUT_FILENO);
+        char* in = strtok(curAction, ">");
+        performAction(clearWhitespace(in));
+        close(out);
+        exit(0);
+    } else {
+        waitpid(pid, &status, 0);
+        if(status == 1) {
+            fprintf(stderr, "%s\n", "ERROR\n");
+        }
+    }
+}
+
 void performAction()
 {
     char *command;
