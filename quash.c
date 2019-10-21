@@ -308,47 +308,39 @@ void performAction()
             Args[i - 1] = args[i];
         }
     }
-    char *background = strchr(input, '&');
-    char *pipe = strchr(input, '|');
-    char *filedir_in = strchr(input, '<');
-    char *filedir_out = strchr(input, '>');
-    char *killAction = strstr(input, "kill");
-    int CD = strcmp("cd", args[0]);
-    int set = strcmp(args[0], "set");
-    int seeJobs = strcmp(args[0], "jobs");
 
-    if (CD == 0)
+    if (strcmp("cd", args[0]) == 0)//CD
     {
         cd(args[1]);
     }
-    else if (set == 0)
+    else if (strcmp(args[0], "set") == 0)// Set Path
     {
         setPath(args[1]);
     }
-    else if (seeJobs == 0)
+    else if (strcmp(args[0], "jobs") == 0)//Show all jobs
     {
         showJobs();
     }
-    else if (pipe != NULL)
+    else if (strchr(input, '|') != NULL)//Pipe creation
     {
         makePipe();
     }
-    else if (background != NULL)
+    else if (strchr(input, '&') != NULL)//Background Process
     {
         process();
     }
-    else if (killAction != NULL)
+    else if (strstr(input, "kill") != NULL)//Kill Job
     {
     }
-    else if (filedir_in != NULL)
+    else if (strchr(input, '<') != NULL)//file in
     {
         fileIN(args);
     }
-    else if (filedir_out != NULL)
+    else if (strchr(input, '>') != NULL)//file out
     {
         fileOUT(args);
     }
-    else
+    else//Run executables
     {
         execute(args);
     }
