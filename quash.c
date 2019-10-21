@@ -292,6 +292,7 @@ int main(int argc, char **argv, char **envp)
             if (strlen(action) > 1)
             {
                 action = clearWhitespace(action);
+                curAction = action;
                 performAction();
             }
         }
