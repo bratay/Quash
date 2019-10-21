@@ -331,6 +331,10 @@ void performAction()
     }
     else if (strstr(input, "kill") != NULL)//Kill Job
     {
+        int pid = (int) strtol(args[2], NULL, 0);
+        int signal = (int) strtol(args[1], NULL, 0);
+        printf("Killing pid %d with signal %d\n", pid, signal);
+        kill(pid, -9);
     }
     else if (strchr(input, '<') != NULL)//file in
     {
