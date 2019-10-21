@@ -201,6 +201,56 @@ void makePipe()
     }
 }
 
+void fileIN(char *args){
+    char* cmdFile = NULL;
+
+    size_t len = 0;
+    ssize_t read;
+    FILE* file_d;
+    int status;
+    pid_t pid;
+    pid = fork();
+    if (strcmp("quash", args[0]) == 0) {
+        file_d = fopen(args[2], "r");
+        do {
+            read = getline(&cmdFile, &len, file_d);
+            if (pid == 0) {
+                performAction(clearWhitespace(cmdFile));
+            } else {
+                waitpid(pid, &status, 0);
+                if(status == 1) {
+                    fprintf(stderr, "%s\n", "ERROR\n");
+                }
+            }
+        } while (read != -1);
+        fclose(file_d);
+    } else {
+        file_d = fopen(args[2], "r");
+        int x = 0;
+        int position = 0;
+        while (position == 0) {
+            if (strcmp("<",args[x]) == 0) {
+                position = x;
+            }
+            x++;
+        }
+        while ((read = getline(&cmdFile, &len, file_d)) == -1) {
+            char* temp_i = strtok(cmdFile, " \0");
+            args[x] = temp_i;
+            x++;
+            printf("%s\n",args[x]);
+        }
+        if (pid == 0) {
+            execute(args);
+        } else {
+            waitpid(pid, &status, 0);
+            if(status == 1) {
+                fprintf(stderr, "%s\n", "ERROR\n");
+            }
+        }
+    }
+}
+
 void performAction()
 {
     char *command;
@@ -264,6 +314,7 @@ void performAction()
     }
     else if (filedir_in != NULL)
     {
+        fileIN(args);
     }
     else if (filedir_out != NULL)
     {
